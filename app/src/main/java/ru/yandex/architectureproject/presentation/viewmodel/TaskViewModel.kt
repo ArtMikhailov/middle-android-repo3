@@ -34,19 +34,15 @@ class TaskViewModel(
     }
 
     fun reduce(action: TaskAction) {
-        viewModelScope.launch {
-            withContext(ioDispatcher) {
-                when (action) {
-                    // TODO: Здесь должна быть обработка действий
-                }
-            }
-        }
+        // TODO: Здесь должна быть обработка действий
     }
 
     private suspend fun loadTasks() {
-        getAllTasksUseCase()
-            .onStart { _state.value = TaskState.Loading }
-            .catch { e -> _state.value = TaskState.Error(e.message ?: "Ошибка загрузки") }
-            .collect { tasks -> _state.value = TaskState.Loaded(tasks) }
+        withContext(ioDispatcher) {
+            getAllTasksUseCase()
+                .onStart { _state.value = TaskState.Loading }
+                .catch { e -> _state.value = TaskState.Error(e.message ?: "Ошибка загрузки") }
+                .collect { tasks -> _state.value = TaskState.Loaded(tasks) }
+        }
     }
 }
