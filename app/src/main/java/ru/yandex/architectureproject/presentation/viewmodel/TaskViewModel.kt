@@ -39,32 +39,32 @@ class TaskViewModel(
 
     fun reduce(action: TaskAction) {
         viewModelScope.launch {
-            withContext(ioDispatcher) {
-                when (action) {
-                    is TaskAction.LoadTasks -> loadTasks()
-                    is TaskAction.AddTask -> addTaskUseCase(action.task)
+            when (action) {
+                is TaskAction.LoadTasks -> loadTasks()
+                is TaskAction.AddTask -> addTaskUseCase(action.task)
 
-                    is TaskAction.UpdateTaskStatus -> {
-                        if (action.isDone) {
-                            taskForDeletionJobMap[action.taskId] = this.coroutineContext.job
-                            completeTaskUseCase(action.taskId)
-                        } else {
-                            taskForDeletionJobMap[action.taskId]?.cancel()
-                            incompleteTaskUseCase(action.taskId)
-                        }
+                is TaskAction.UpdateTaskStatus -> {
+                    if (action.isDone) {
+                        taskForDeletionJobMap[action.taskId] = this.coroutineContext.job
+                        completeTaskUseCase(action.taskId)
+                    } else {
+                        taskForDeletionJobMap[action.taskId]?.cancel()
+                        incompleteTaskUseCase(action.taskId)
                     }
-
-                    is TaskAction.DeleteTask -> deleteTaskUseCase(action.taskId)
                 }
-                if (action != TaskAction.LoadTasks) reduce(TaskAction.LoadTasks)
+
+                is TaskAction.DeleteTask -> deleteTaskUseCase(action.taskId)
             }
+            if (action != TaskAction.LoadTasks) reduce(TaskAction.LoadTasks)
         }
     }
 
     private suspend fun loadTasks() {
-        getAllTasksUseCase()
-            .onStart { _state.value = TaskState.Loading }
-            .catch { e -> _state.value = TaskState.Error(e.message ?: "Ошибка загрузки") }
-            .collect { tasks -> _state.value = TaskState.Loaded(tasks) }
+        withContext(ioDispatcher) {
+            getAllTasksUseCase()
+                .onStart { _state.value = TaskState.Loading }
+                .catch { e -> _state.value = TaskState.Error(e.message ?: "Ошибка загрузки") }
+                .collect { tasks -> _state.value = TaskState.Loaded(tasks) }
+        }
     }
 }
