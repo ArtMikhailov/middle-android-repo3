@@ -8,6 +8,7 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.catch
+import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.onStart
 import kotlinx.coroutines.job
 import kotlinx.coroutines.launch
@@ -55,13 +56,13 @@ class TaskViewModel(
 
                 is TaskAction.DeleteTask -> deleteTaskUseCase(action.taskId)
             }
-            if (action != TaskAction.LoadTasks) reduce(TaskAction.LoadTasks)
         }
     }
 
     private suspend fun loadTasks() {
         withContext(ioDispatcher) {
             getAllTasksUseCase()
+                .distinctUntilChanged()
                 .onStart { _state.value = TaskState.Loading }
                 .catch { e -> _state.value = TaskState.Error(e.message ?: "Ошибка загрузки") }
                 .collect { tasks -> _state.value = TaskState.Loaded(tasks) }
