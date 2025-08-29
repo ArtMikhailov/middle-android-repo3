@@ -48,7 +48,7 @@ class TaskViewModel(
                     taskForDeletionJobMap[action.taskId] = this.coroutineContext.job
                     completeTaskUseCase(action.taskId)
                 } else {
-                    taskForDeletionJobMap[action.taskId]?.cancel()
+                    taskForDeletionJobMap.remove(action.taskId)?.cancel()
                     incompleteTaskUseCase(action.taskId)
                 }
             }
